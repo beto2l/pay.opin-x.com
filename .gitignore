@@ -1,0 +1,24 @@
+# Configuración sensible del servidor (NUNCA subir a GitHub)
+.env
+.env.*
+!.env.example
+
+# Logs
+deploy.log
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Dependencias
+node_modules/
+vendor/
+
+# Editor files
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+.abacus.donotdelete

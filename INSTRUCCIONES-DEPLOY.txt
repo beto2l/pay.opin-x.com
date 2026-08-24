@@ -1,0 +1,211 @@
+================================================================
+  RECETARIO KETO - INSTRUCCIONES DE INSTALACIÓN Y DEPLOY
+  Repositorio: github.com/beto2l/pay.opin-x.com  (privado)
+================================================================
+
+TABLA DE CONTENIDO:
+1. Requisitos del Servidor
+2. Configurar el archivo .env (credenciales de Stripe)
+3. Configurar Llave SSH en el Servidor
+4. Clonar el Repositorio en el Servidor
+5. Configurar Auto-Deploy
+6. Cómo Actualizar el Sitio
+7. Workflow de Trabajo Recomendado
+8. Solución de Problemas
+
+================================================================
+1. REQUISITOS DEL SERVIDOR
+================================================================
+
+- Hosting con acceso SSH (cPanel, Plesk, o VPS)
+- PHP 7.4 o superior con extensión cURL habilitada
+- Git instalado en el servidor
+- Apache con mod_rewrite habilitado
+- Una cuenta de Stripe (claves pk_live_... y sk_live_...)
+
+Para verificar si Git está instalado:
+  ssh tu-usuario@tu-servidor
+  git --version
+
+================================================================
+2. CONFIGURAR EL ARCHIVO .env (CREDENCIALES DE STRIPE)
+================================================================
+
+IMPORTANTE: Las contraseñas y secretos de Stripe se guardan
+SOLO en el archivo .env del servidor. Este archivo NUNCA se
+sube a GitHub y NUNCA se sobrescribe al actualizar el sitio.
+
+PASO 1 - Copiar la plantilla:
+  cp .env.example .env
+
+PASO 2 - Editar .env con tus valores reales:
+  nano .env
+
+  Completa:
+    STRIPE_PUBLISHABLE_KEY=pk_live_...   (clave pública de Stripe)
+    STRIPE_SECRET_KEY=sk_live_...        (clave secreta de Stripe)
+    DEPLOY_SECRET=un-secreto-largo-unico (para el botón de deploy)
+    SITE_PATH=/home/tu-usuario/public_html
+    GITHUB_ZIP_URL=https://github.com/beto2l/pay.opin-x.com/archive/refs/heads/main.zip
+    SITE_URL=https://tu-dominio.com
+    SUCCESS_EMAIL=ventas@recetarioketo.com
+
+PASO 3 - Proteger el archivo:
+  chmod 600 .env
+
+NOTA: El repositorio es PRIVADO, por lo que el método de deploy
+recomendado es Git con llave SSH (sección 3), ya que la descarga
+por ZIP público no funciona en repos privados.
+
+================================================================
+3. CONFIGURAR LLAVE SSH EN EL SERVIDOR
+================================================================
+
+Esto permite que el servidor descargue código de GitHub (repo
+privado) sin pedir contraseña.
+
+PASO 1 - Generar llave SSH en el servidor:
+  ssh-keygen -t ed25519 -C "servidor-recetario"
+  (Presionar Enter 3 veces para aceptar defaults)
+
+PASO 2 - Copiar la llave pública:
+  cat ~/.ssh/id_ed25519.pub
+  (Copiar TODO el texto que aparece)
+
+PASO 3 - Agregar la llave a GitHub:
+  1. Ir a: https://github.com/beto2l/pay.opin-x.com/settings/keys
+  2. Click "Add deploy key"
+  3. Title: "Servidor Producción"
+  4. Key: Pegar la llave copiada
+  5. Click "Add key"
+
+PASO 4 - Probar conexión:
+  ssh -T git@github.com
+
+================================================================
+4. CLONAR EL REPOSITORIO EN EL SERVIDOR
+================================================================
+
+PASO 1 - Navegar a la carpeta del sitio:
+  cd ~/public_html
+
+PASO 2 - Si ya hay archivos existentes, hacer backup:
+  mkdir ~/backup_sitio_viejo
+  cp -r ~/public_html/* ~/backup_sitio_viejo/
+
+PASO 3 - Clonar el repositorio:
+
+  OPCIÓN A - Si la carpeta está vacía:
+    git clone git@github.com:beto2l/pay.opin-x.com.git .
+
+  OPCIÓN B - Si ya hay archivos:
+    cd ~
+    git clone git@github.com:beto2l/pay.opin-x.com.git recetario_temp
+    cp -r recetario_temp/* public_html/
+    cp -r recetario_temp/.* public_html/   (para .htaccess, etc.)
+    cd public_html
+    rm -rf ~/recetario_temp
+
+PASO 4 - Crear y configurar el .env (ver sección 2).
+  ¡Recuerda que .env NO viene en el repo, lo creas manualmente!
+
+PASO 5 - Configurar permisos:
+  chmod -R 755 assets scripts step
+  chmod 600 .env
+
+PASO 6 - Verificar que funciona:
+  Abrir en el navegador:
+  https://tu-dominio.com/step/recetario-keto/
+
+================================================================
+5. CONFIGURAR AUTO-DEPLOY
+================================================================
+
+El archivo deploy.php permite actualizar el sitio visitando
+una URL secreta. El valor del secreto se lee del .env
+(DEPLOY_SECRET).
+
+Probar el deploy:
+  https://tu-dominio.com/deploy.php?secret=TU_DEPLOY_SECRET
+
+Debe responder con JSON indicando éxito:
+  {"success": true, "message": "Sitio actualizado correctamente desde GitHub", ...}
+
+IMPORTANTE: deploy.php NUNCA sobrescribe ni borra:
+  - .env         (tus credenciales de Stripe)
+  - deploy.log   (registro de actualizaciones)
+  - data/        (datos locales del servidor)
+
+================================================================
+6. CÓMO ACTUALIZAR EL SITIO
+================================================================
+
+MÉTODO 1 - Desde GitHub (Recomendado)
+--------------------------------------
+1. Hacer cambios en GitHub (editar online o push local)
+2. Visitar la URL de deploy:
+   https://tu-dominio.com/deploy.php?secret=TU_DEPLOY_SECRET
+3. ¡Listo! El sitio se actualiza (sin tocar tu .env)
+
+MÉTODO 2 - Manual por SSH
+--------------------------
+1. Conectar al servidor: ssh tu-usuario@tu-servidor
+2. Ir al sitio: cd ~/public_html
+3. Descargar cambios: git pull origin main
+
+MÉTODO 3 - Webhook Automático (Avanzado)
+-----------------------------------------
+1. Ir a: https://github.com/beto2l/pay.opin-x.com/settings/hooks
+2. Click "Add webhook"
+3. Payload URL: https://tu-dominio.com/deploy.php?secret=TU_DEPLOY_SECRET
+4. Content type: application/json
+5. Events: "Just the push event"
+6. Click "Add webhook"
+
+================================================================
+7. WORKFLOW DE TRABAJO RECOMENDADO
+================================================================
+
+DESDE GITHUB (más fácil):
+1. Ir a github.com/beto2l/pay.opin-x.com
+2. Editar el archivo que quieres cambiar
+3. Commit changes
+4. Visitar la URL de deploy para actualizar el servidor
+
+DESDE TU COMPUTADORA (cambios grandes):
+1. git clone git@github.com:beto2l/pay.opin-x.com.git
+2. Hacer cambios localmente
+3. git add . && git commit -m "Descripción" && git push origin main
+4. Visitar la URL de deploy
+
+================================================================
+8. SOLUCIÓN DE PROBLEMAS
+================================================================
+
+PROBLEMA: El checkout dice "El servidor de pagos no está configurado"
+SOLUCIÓN: Falta STRIPE_SECRET_KEY en el .env, o el .env no es legible.
+  - Verificar que el .env existe en la raíz del sitio
+  - Verificar STRIPE_SECRET_KEY y STRIPE_PUBLISHABLE_KEY
+
+PROBLEMA: "La configuración de pago no está disponible" en el navegador
+SOLUCIÓN: Falta STRIPE_PUBLISHABLE_KEY en el .env.
+
+PROBLEMA: deploy.php da "Acceso denegado"
+SOLUCIÓN: El secret no coincide con DEPLOY_SECRET del .env.
+
+PROBLEMA: deploy.php da error de git / no descarga ZIP
+SOLUCIÓN: El repo es privado. Usa el método Git con llave SSH
+  (sección 3). La descarga por ZIP público no funciona en repos privados.
+
+PROBLEMA: El pago falla con tarjeta de prueba
+SOLUCIÓN: Con claves live debes usar una tarjeta real. Para pruebas
+  usa claves de test (pk_test_/sk_test_) y la tarjeta 4242 4242 4242 4242.
+
+================================================================
+  CONTACTO Y SOPORTE
+================================================================
+
+Repositorio: https://github.com/beto2l/pay.opin-x.com
+Email: ventas@recetarioketo.com
+
+================================================================

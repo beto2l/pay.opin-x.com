@@ -1,0 +1,54 @@
+# Recetario Keto - Configuración Apache
+# ======================================
+
+# Archivo de índice por defecto (PHP primero para inyectar la clave de Stripe)
+DirectoryIndex index.php index.html
+
+# Activar rewrite engine
+RewriteEngine On
+
+# Forzar HTTPS
+RewriteCond %{HTTPS} off
+RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# Si el usuario entra a /step/recetario-keto/ servir index.php
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^step/recetario-keto/?$ step/recetario-keto/index.php [L]
+
+# Proteger archivos sensibles
+<FilesMatch "^(\.env|\.env\..*|deploy\.log|\.gitignore|\.git|README\.md)$">
+    Require all denied
+    Deny from all
+</FilesMatch>
+
+# Proteger directorio .git y archivos ocultos sensibles
+RedirectMatch 404 /\.git
+RedirectMatch 404 /\.env
+
+# Proteger data directory de acceso directo
+RedirectMatch 404 ^/data/
+
+# Caché de archivos estáticos
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType image/jpeg "access plus 1 month"
+    ExpiresByType image/png "access plus 1 month"
+    ExpiresByType image/webp "access plus 1 month"
+    ExpiresByType image/svg+xml "access plus 1 month"
+    ExpiresByType text/css "access plus 1 week"
+    ExpiresByType application/javascript "access plus 1 week"
+    ExpiresByType text/html "access plus 1 hour"
+</IfModule>
+
+# Compresión GZIP
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/css application/javascript application/json image/svg+xml
+</IfModule>
+
+# Seguridad headers
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set X-XSS-Protection "1; mode=block"
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
