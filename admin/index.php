@@ -8,17 +8,37 @@ if (admin_is_authenticated()) {
 }
 
 $error = '';
+$locked = admin_is_locked_out();
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $user = isset($_POST['user']) ? trim($_POST['user']) : '';
-    $pass = isset($_POST['pass']) ? (string) $_POST['pass'] : '';
-    if (admin_check_login($user, $pass)) {
-        admin_login();
-        header('Location: dashboard.php');
-        exit;
+    if ($locked) {
+        $mins = (int) ceil(admin_lockout_remaining() / 60);
+        $error = 'Demasiados intentos fallidos. Vuelve a intentarlo en ' . $mins . ' minuto(s).';
+    } else {
+        $user = isset($_POST['user']) ? trim($_POST['user']) : '';
+        $pass = isset($_POST['pass']) ? (string) $_POST['pass'] : '';
+        if (admin_check_login($user, $pass)) {
+            admin_clear_attempts();
+            admin_login();
+            header('Location: dashboard.php');
+            exit;
+        }
+        // Registrar el intento fallido y avisar de los intentos restantes.
+        admin_record_failed_attempt();
+        $locked = admin_is_locked_out();
+        if ($locked) {
+            $mins = (int) ceil(admin_lockout_remaining() / 60);
+            $error = 'Demasiados intentos fallidos. Cuenta bloqueada por ' . $mins . ' minuto(s).';
+        } else {
+            $left = admin_remaining_attempts();
+            $error = 'Usuario o contraseña incorrectos. Te quedan ' . $left . ' intento(s).';
+        }
+        // Pequeña espera para dificultar fuerza bruta.
+        sleep(1);
     }
-    $error = 'Usuario o contraseña incorrectos.';
-    // Pequeña espera para dificultar fuerza bruta.
-    sleep(1);
+} elseif ($locked) {
+    $mins = (int) ceil(admin_lockout_remaining() / 60);
+    $error = 'Demasiados intentos fallidos. Vuelve a intentarlo en ' . $mins . ' minuto(s).';
 }
 ?><!DOCTYPE html>
 <html lang="es">

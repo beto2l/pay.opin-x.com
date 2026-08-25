@@ -393,7 +393,7 @@ $k2 = isset($_GET['k2']) ? preg_replace('/[^a-zA-Z0-9_\-]/', '', $_GET['k2']) : 
             <div class="testi">
                 <div class="stars"><img src="../../assets/img/5-estrellas.webp" alt="5 estrellas"></div>
                 <div class="quote">¡Cuando hice mi compra me gusto que me contactaron para entregarme mi programa y bueno ya llevo 4 kilos Muchas Gracias!</div>
-                <img class="avatar" src="../../assets/img/u3-g.jpg" alt="Julia Barrios">
+                <img class="avatar" src="../../assets/img/u4-g.jpg" alt="Julia Barrios">
                 <div class="name">Julia Barrios</div>
             </div>
         </div>

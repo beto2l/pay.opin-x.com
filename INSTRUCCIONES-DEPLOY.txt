@@ -62,15 +62,32 @@ PASO 2 - Editar .env con tus valores reales:
     ADMIN_PASSWORD_HASH=$2y$...          (ver PASO 2B)
 
 PASO 2B - Generar el hash de la contraseña del panel (/admin/):
-  Nunca guardes la contraseña en texto plano. Genera un hash así
-  (en el servidor o en cualquier PHP):
+  Nunca guardes la contraseña en texto plano.
 
+  FORMA FÁCIL (recomendada) - página web:
+    Abre en el navegador:
+      https://tu-dominio.com/admin/hash.php
+    Escribe la contraseña que quieras, pulsa "Generar hash" y usa el
+    botón "Copiar hash". Pega el resultado en el .env:
+      ADMIN_PASSWORD_HASH=$2y$...
+    (Sin comillas ni espacios extra.)
+
+  ALTERNATIVA por consola (si prefieres):
     php -r 'echo password_hash("TuContraseñaSegura", PASSWORD_DEFAULT);'
-
-  Copia el resultado (empieza con $2y$...) y pégalo en:
-    ADMIN_PASSWORD_HASH=$2y$...
+    Copia el resultado (empieza con $2y$...) y pégalo en:
+      ADMIN_PASSWORD_HASH=$2y$...
 
   Para cambiar la contraseña luego, genera un hash nuevo y reemplázalo.
+
+  IMPORTANTE: el hash empieza con "$2y$" y contiene el símbolo "$".
+  Pégalo TAL CUAL en el .env, sin comillas. Ese es el error más común
+  por el que "no funciona" la contraseña.
+
+NOTA DE SEGURIDAD - bloqueo por intentos:
+  El panel /admin/ cuenta los intentos fallidos de login. Tras 5 intentos
+  incorrectos desde la misma IP, se bloquea el acceso durante 15 minutos.
+  El contador se guarda en /data/login-attempts.json y se reinicia solo
+  al pasar el tiempo o al iniciar sesión correctamente.
 
 PASO 3 - Proteger el archivo:
   chmod 600 .env
@@ -254,15 +271,23 @@ PROBLEMA: El pago falla con tarjeta de prueba
 SOLUCIÓN: Con claves live debes usar una tarjeta real. Para pruebas
   usa claves de test (pk_test_/sk_test_) y la tarjeta 4242 4242 4242 4242.
 
-PROBLEMA: No puedo entrar al panel /admin/
-SOLUCIÓN: Revisa ADMIN_USER y ADMIN_PASSWORD_HASH en el .env. El hash
-  debe generarse con password_hash() (sección 2, PASO 2B). Si el botón
-  "Actualizar sitio" aparece deshabilitado, falta DEPLOY_SECRET en el .env.
+PROBLEMA: No puedo entrar al panel /admin/ / "la contraseña no funciona"
+SOLUCIÓN: Genera el hash otra vez en https://tu-dominio.com/admin/hash.php
+  y pégalo TAL CUAL en ADMIN_PASSWORD_HASH del .env (sin comillas ni
+  espacios). El hash empieza con "$2y$"; ese "$" es normal y debe quedar
+  igual. Revisa también ADMIN_USER. Si el botón "Actualizar sitio" aparece
+  deshabilitado, falta DEPLOY_SECRET en el .env.
+
+PROBLEMA: "Demasiados intentos fallidos" / cuenta bloqueada
+SOLUCIÓN: Tras 5 intentos fallidos la IP se bloquea 15 minutos. Espera ese
+  tiempo o borra el archivo /data/login-attempts.json en el servidor para
+  desbloquear al instante.
 
 PROBLEMA: La raíz "/" o una URL cualquiera muestra archivos / listado
 SOLUCIÓN: Verifica que el .htaccess se subió (tiene "Options -Indexes")
-  y que Apache permite AllowOverride para leer .htaccess. La raíz debe
-  devolver la página 404 neutra.
+  y que Apache permite AllowOverride para leer .htaccess. Cualquier URL
+  que no sea /admin/ ni una página real debe redirigir a
+  /step/recetario-keto/.
 
 ================================================================
   CONTACTO Y SOPORTE

@@ -22,15 +22,22 @@ RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 RewriteCond %{REQUEST_FILENAME} -d
 RewriteRule ^step/[^/]+/?$ %{REQUEST_URI}index.php [L]
 
-# ----- Ocultar todo lo que no sea una página pública -----
-# Bloquear acceso directo a la carpeta de scripts compartidos
+# ----- Redirigir TODO lo demás a la primera página -----
+# Cualquier URL que NO sea una página de step, el panel /admin/, los
+# archivos de /assets/ o el endpoint deploy.php se redirige (302) a la
+# primera página de checkout. Así /, /nusa/, /wp-login, etc. nunca
+# muestran errores ni listados: siempre llevan a recetario-keto.
+RewriteCond %{REQUEST_URI} !^/step/
+RewriteCond %{REQUEST_URI} !^/admin/
+RewriteCond %{REQUEST_URI} !^/assets/
+RewriteCond %{REQUEST_URI} !^/deploy\.php$ [NC]
+RewriteRule ^ /step/recetario-keto/ [L,R=302]
+
+# ----- Bloqueos de seguridad (por si acaso, además del redirect) -----
+# La carpeta de scripts compartidos y data nunca deben servirse directo.
 RedirectMatch 404 ^/scripts(/|$)
-# Bloquear acceso directo a la carpeta data
 RedirectMatch 404 ^/data(/|$)
-# Bloquear la carpeta .git
 RedirectMatch 404 /\.git
-# Bloquear archivos de texto/documentación y ejemplos de configuración
-RedirectMatch 404 (?i)\.(env|md|txt|log|sample|example|bak|dist|json|lock)$
 
 # Proteger archivos sensibles por nombre
 <FilesMatch "^(\.env|\.env\..*|deploy\.log|\.gitignore|\.gitkeep|README\.md|INSTRUCCIONES-DEPLOY\.txt|\.htaccess)$">
