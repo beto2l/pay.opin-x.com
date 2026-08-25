@@ -5,9 +5,9 @@
  *     $THANKYOU_SLUG = '<slug>';
  *     require ...'/scripts/render-thankyou.php';
  *
- * Los enlaces de descarga se configuran en scripts/products.php
- * (array $THANKYOU_PAGES). Si no hay enlaces, se muestra un mensaje
- * de respaldo sin enlaces falsos.
+ * El contenido (enlaces, portadas, textos y secciones) se define en
+ * scripts/products.php (array $THANKYOU_PAGES). Replica el diseño de las
+ * páginas originales de WordPress.
  */
 
 require_once dirname(__DIR__) . '/scripts/products.php';
@@ -20,6 +20,37 @@ if (!$PAGE) {
     exit;
 }
 $downloads = isset($PAGE['downloads']) && is_array($PAGE['downloads']) ? $PAGE['downloads'] : [];
+$sections  = isset($PAGE['sections'])  && is_array($PAGE['sections'])  ? $PAGE['sections']  : [];
+$contact   = isset($PAGE['contact']) ? $PAGE['contact'] : '¿Tienes dudas? Escríbenos a ventas@recetarioketo.com';
+$followUrl = isset($PAGE['follow_url']) ? $PAGE['follow_url'] : 'https://www.facebook.com/recetarioketodigital/';
+
+/** Renderiza una sección de contenido (contenido de confianza definido en products.php). */
+function ty_render_section($s) {
+    $type = isset($s['type']) ? $s['type'] : '';
+    switch ($type) {
+        case 'heading_green':
+            echo '<h2 class="ty-green">' . htmlspecialchars($s['text']) . '</h2>';
+            break;
+        case 'heading':
+            echo '<h2 class="ty-h2">' . htmlspecialchars($s['text']) . '</h2>';
+            break;
+        case 'paragraph':
+            echo '<p class="ty-p">' . htmlspecialchars($s['text']) . '</p>';
+            break;
+        case 'quote':
+            echo '<p class="ty-quote">' . htmlspecialchars($s['text']) . '</p>';
+            break;
+        case 'link_line':
+            echo '<p class="ty-p"><a href="' . htmlspecialchars($s['url']) . '" target="_blank" rel="noopener">' . htmlspecialchars($s['text']) . '</a></p>';
+            break;
+        case 'image':
+            echo '<div class="ty-img"><img src="' . htmlspecialchars($s['image']) . '" alt="' . htmlspecialchars(isset($s['alt']) ? $s['alt'] : '') . '" loading="lazy"></div>';
+            break;
+        case 'image_link':
+            echo '<div class="ty-img"><a href="' . htmlspecialchars($s['url']) . '" target="_blank" rel="noopener"><img src="' . htmlspecialchars($s['image']) . '" alt="' . htmlspecialchars(isset($s['alt']) ? $s['alt'] : '') . '" loading="lazy"></a></div>';
+            break;
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -35,81 +66,143 @@ $downloads = isset($PAGE['downloads']) && is_array($PAGE['downloads']) ? $PAGE['
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Roboto', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-            background: #cde5f4;
-            color: #333;
-            padding: 40px 15px;
-            min-height: 100vh;
-            display: flex;
-            align-items: flex-start;
-            justify-content: center;
-        }
-        .card {
-            max-width: 620px;
-            width: 100%;
             background: #fff;
-            border-radius: 8px;
-            padding: 46px 34px;
-            box-shadow: 0 6px 24px rgba(0,0,0,0.08);
-            text-align: center;
+            color: #4a4a4a;
+            padding: 40px 15px 60px;
+            line-height: 1.6;
         }
-        .logo-wrap { margin-bottom: 30px; }
-        .logo-wrap img { max-width: 260px; width: 65%; height: auto; }
+        .ty-wrap { max-width: 780px; margin: 0 auto; text-align: center; }
         .check {
-            width: 92px; height: 92px; border-radius: 50%;
-            background: #33a652; margin: 0 auto 24px;
+            width: 62px; height: 62px; border-radius: 50%;
+            background: #2b2b3a; margin: 0 auto 22px;
             display: flex; align-items: center; justify-content: center;
         }
-        .check svg { width: 48px; height: 48px; fill: none; stroke: #fff; stroke-width: 3; }
-        h1 { font-size: 30px; color: #222; font-weight: 700; margin-bottom: 14px; }
-        p.lead { font-size: 16px; color: #555; margin-bottom: 30px; line-height: 1.6; }
-        .downloads { margin: 0 auto 10px; max-width: 420px; }
+        .check svg { width: 30px; height: 30px; fill: none; stroke: #fff; stroke-width: 3; }
+        h1.ty-title { font-size: 34px; color: #33475b; font-weight: 700; margin-bottom: 16px; }
+        .ty-intro { font-size: 17px; color: #5a6b7b; max-width: 620px; margin: 0 auto 18px; }
+        .ty-contact { font-size: 13px; color: #9aa7b1; margin: 6px auto 10px; }
+        .ty-green {
+            color: #2ecc71; font-size: 26px; font-weight: 700;
+            margin: 40px auto 18px; max-width: 680px;
+        }
+        .ty-h2 { color: #33475b; font-size: 22px; font-weight: 700; margin: 26px auto 14px; max-width: 640px; }
+        .ty-note { font-size: 15px; color: #5a6b7b; max-width: 640px; margin: 0 auto 8px; }
+        .ty-sub { font-weight: 700; color: #33475b; margin-bottom: 26px; display: block; }
+        .ty-p { font-size: 16px; color: #5a6b7b; max-width: 640px; margin: 0 auto 18px; }
+        .ty-p a { color: #2b6cb0; font-weight: 600; }
+        .ty-quote {
+            font-size: 17px; color: #33475b; font-style: italic; font-weight: 500;
+            max-width: 600px; margin: 0 auto 22px; background: #f4f7fa;
+            border-left: 4px solid #2ecc71; padding: 14px 20px; text-align: left;
+        }
+        /* Tarjetas de descarga */
+        .downloads {
+            display: flex; flex-wrap: wrap; justify-content: center;
+            gap: 34px; margin: 10px auto 20px;
+        }
+        .dl-card { width: 250px; display: flex; flex-direction: column; align-items: center; }
+        .dl-card img {
+            width: 100%; height: auto; border-radius: 6px;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.12); margin-bottom: 16px;
+        }
         .btn-download {
-            display: block;
-            background: #e06020;
-            color: #fff;
-            text-decoration: none;
-            padding: 15px 24px;
-            border-radius: 4px;
-            font-size: 16px;
-            font-weight: 600;
-            margin-bottom: 14px;
-            transition: background 0.2s;
+            display: inline-block; background: #2b2b3a; color: #fff;
+            text-decoration: none; padding: 13px 26px; border-radius: 40px;
+            font-size: 15px; font-weight: 600; transition: background 0.2s;
         }
-        .btn-download:hover { background: #cc541a; }
-        .note {
-            background: #f4f7fa; border: 1px solid #e0e6ec; border-radius: 6px;
-            padding: 16px 18px; font-size: 14px; color: #555; line-height: 1.6; margin: 0 auto 20px; max-width: 460px;
+        .btn-download:hover { background: #e06020; }
+        .ty-img { margin: 6px auto 22px; }
+        .ty-img img { max-width: 100%; height: auto; border-radius: 6px; }
+        /* Pasos finales */
+        .steps {
+            display: flex; flex-wrap: wrap; justify-content: center; gap: 24px;
+            margin: 40px auto 10px; max-width: 720px;
         }
-        .footer-note { margin-top: 24px; font-size: 13px; color: #999; }
+        .step { flex: 1 1 200px; max-width: 220px; }
+        .step .num {
+            width: 44px; height: 44px; border-radius: 50%; background: #2ecc71; color: #fff;
+            font-size: 20px; font-weight: 700; display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 12px;
+        }
+        .step h4 { color: #33475b; font-size: 17px; margin-bottom: 6px; }
+        .step p { color: #5a6b7b; font-size: 14px; }
+        .social { margin-top: 46px; }
+        .social h2 { color: #33475b; font-size: 22px; margin-bottom: 16px; }
+        .btn-social {
+            display: inline-block; background: #1877f2; color: #fff; text-decoration: none;
+            padding: 12px 28px; border-radius: 40px; font-size: 15px; font-weight: 600;
+        }
+        .btn-social:hover { background: #145dbf; }
+        @media (max-width: 600px) {
+            h1.ty-title { font-size: 27px; }
+            .ty-green { font-size: 22px; }
+        }
     </style>
 </head>
 <body>
-    <div class="card">
-        <div class="logo-wrap">
-            <img src="../../assets/img/logo.svg" alt="Logotipo <?= htmlspecialchars($PAGE['brand']) ?>">
-        </div>
+    <div class="ty-wrap">
         <div class="check">
             <svg viewBox="0 0 24 24"><polyline points="4 12.5 9.5 18 20 6"></polyline></svg>
         </div>
-        <h1><?= htmlspecialchars($PAGE['heading']) ?></h1>
-        <p class="lead"><?= htmlspecialchars($PAGE['message']) ?></p>
+        <h1 class="ty-title">Gracias por tu compra</h1>
+        <p class="ty-intro"><?= htmlspecialchars($PAGE['intro']) ?></p>
+
+        <?php if (!empty($PAGE['contact_after_intro'])): ?>
+            <p class="ty-contact"><?= htmlspecialchars($contact) ?></p>
+        <?php endif; ?>
+
+        <?php if (!empty($PAGE['instructions_heading'])): ?>
+            <h2 class="ty-green"><?= htmlspecialchars($PAGE['instructions_heading']) ?></h2>
+        <?php endif; ?>
+        <?php if (!empty($PAGE['instructions_note'])): ?>
+            <p class="ty-note"><?= htmlspecialchars($PAGE['instructions_note']) ?></p>
+        <?php endif; ?>
+        <span class="ty-sub">Aquí tienes los enlaces de descarga:</span>
 
         <?php if (!empty($downloads)): ?>
             <div class="downloads">
                 <?php foreach ($downloads as $dl): ?>
                     <?php if (!empty($dl['url']) && !empty($dl['label'])): ?>
-                        <a class="btn-download" href="<?= htmlspecialchars($dl['url']) ?>" target="_blank" rel="noopener"><?= htmlspecialchars($dl['label']) ?></a>
+                        <div class="dl-card">
+                            <?php if (!empty($dl['image'])): ?>
+                                <img src="<?= htmlspecialchars($dl['image']) ?>" alt="<?= htmlspecialchars($dl['label']) ?>" loading="lazy">
+                            <?php endif; ?>
+                            <a class="btn-download" href="<?= htmlspecialchars($dl['url']) ?>" target="_blank" rel="noopener"><?= htmlspecialchars($dl['label']) ?> &rsaquo;</a>
+                        </div>
                     <?php endif; ?>
                 <?php endforeach; ?>
             </div>
-        <?php else: ?>
-            <div class="note">
-                En unos instantes tendrás disponible aquí tu descarga. Si no la ves,
-                revisa tu correo o escríbenos y con gusto te la enviamos.
-            </div>
         <?php endif; ?>
 
-        <div class="footer-note">Si tienes dudas, escríbenos a ventas@recetarioketo.com</div>
+        <?php if (!empty($PAGE['contact_after_downloads'])): ?>
+            <p class="ty-contact"><?= htmlspecialchars($contact) ?></p>
+        <?php endif; ?>
+
+        <?php foreach ($sections as $s) { ty_render_section($s); } ?>
+
+        <!-- Pasos finales (comunes) -->
+        <div class="steps">
+            <div class="step">
+                <div class="num">1</div>
+                <h4>Revisa tu correo</h4>
+                <p>En tu bandeja de entrada recibirás el comprobante de tu compra.</p>
+            </div>
+            <div class="step">
+                <div class="num">2</div>
+                <h4>Haz clic en el enlace</h4>
+                <p>Para poder acceder al recetario digital keto.</p>
+            </div>
+            <div class="step">
+                <div class="num">3</div>
+                <h4>Disfrútalo</h4>
+                <p>Comienza a preparar las recetas que más te gusten.</p>
+            </div>
+        </div>
+
+        <div class="social">
+            <h2>¡Síguenos en redes sociales!</h2>
+            <a class="btn-social" href="<?= htmlspecialchars($followUrl) ?>" target="_blank" rel="noopener">Síguenos en Facebook</a>
+        </div>
     </div>
 </body>
 </html>
