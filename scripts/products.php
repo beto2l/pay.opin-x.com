@@ -21,6 +21,8 @@ $PRODUCTS = [
         'stripe_description'  => 'Recetario Keto - Producto digital',
         'offer_desc'          => 'El Recetario Keto es un producto digital, al completar tu compra, recibirás en tu correo los enlaces para poder descargarlo.',
         'success_desc'        => 'Gracias por tu compra. En breve recibirás un correo con el enlace de descarga de tu Recetario Keto.',
+        // Página de "gracias" a la que se redirige tras el pago exitoso.
+        'thank_you_url'       => '/step/recetario-keto-thank-you/',
     ],
 
     'compra-nochebuena-keto' => [
@@ -35,6 +37,8 @@ $PRODUCTS = [
         'stripe_description'  => 'Recetario Noche Buena Keto - Producto digital',
         'offer_desc'          => 'El Recetario de Nochebuena Keto es un producto digital, al completar tu compra, recibirás en tu correo los enlaces para poder descargarlo; los enlaces de descarga son vitalicios.',
         'success_desc'        => 'Gracias por tu compra. En breve recibirás un correo con el enlace de descarga de tu Recetario de Nochebuena Keto.',
+        // Noche Buena no tiene página propia: usa la de recetario-keto.
+        'thank_you_url'       => '/step/recetario-keto-thank-you/',
     ],
 
     'postres-y-snacks-keto' => [
@@ -49,6 +53,42 @@ $PRODUCTS = [
         'stripe_description'  => 'Recetario Postres y Snacks Keto - Producto digital',
         'offer_desc'          => 'El Recetario de Postres y Snacks Keto es un producto digital, al completar tu compra, recibirás en tu correo los enlaces para poder descargarlo, los enlaces de descarga son vitalicios.',
         'success_desc'        => 'Gracias por tu compra. En breve recibirás un correo con el enlace de descarga de tu Recetario de Postres y Snacks Keto.',
+        'thank_you_url'       => '/step/gracias-por-tu-compra-postres/',
+    ],
+
+];
+
+/**
+ * Páginas de "gracias / descarga" (thank you) tras el pago.
+ * Cada una vive en /step/<slug>/ y muestra los enlaces de descarga.
+ *
+ * En 'downloads' agrega cada archivo así:
+ *   ['label' => 'Descargar Recetario Keto (PDF)', 'url' => 'https://...'],
+ * Si 'downloads' está vacío, la página muestra un mensaje de respaldo
+ * (sin enlaces falsos) invitando a revisar el correo.
+ */
+$THANKYOU_PAGES = [
+
+    'recetario-keto-thank-you' => [
+        'slug'      => 'recetario-keto-thank-you',
+        'title'     => '¡Gracias por tu compra! - Recetario Keto',
+        'brand'     => 'Recetario Keto',
+        'heading'   => '¡Gracias por tu compra!',
+        'message'   => 'Tu pago se realizó con éxito. Aquí puedes descargar tu compra. También recibirás el recibo de tu pago por correo de parte de Stripe.',
+        'downloads' => [
+            // ['label' => 'Descargar Recetario Keto (PDF)', 'url' => 'https://...'],
+        ],
+    ],
+
+    'gracias-por-tu-compra-postres' => [
+        'slug'      => 'gracias-por-tu-compra-postres',
+        'title'     => '¡Gracias por tu compra! - Postres y Snacks Keto',
+        'brand'     => 'Recetario Keto',
+        'heading'   => '¡Gracias por tu compra!',
+        'message'   => 'Tu pago se realizó con éxito. Aquí puedes descargar tu compra. También recibirás el recibo de tu pago por correo de parte de Stripe.',
+        'downloads' => [
+            // ['label' => 'Descargar Postres y Snacks Keto (PDF)', 'url' => 'https://...'],
+        ],
     ],
 
 ];
@@ -59,5 +99,13 @@ $PRODUCTS = [
 function recetario_get_product($slug) {
     global $PRODUCTS;
     return isset($PRODUCTS[$slug]) ? $PRODUCTS[$slug] : null;
+}
+
+/**
+ * Devuelve la configuración de una página de "gracias" o null si no existe.
+ */
+function recetario_get_thankyou($slug) {
+    global $THANKYOU_PAGES;
+    return isset($THANKYOU_PAGES[$slug]) ? $THANKYOU_PAGES[$slug] : null;
 }
 ?>

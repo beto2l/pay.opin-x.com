@@ -26,6 +26,11 @@ if (!$PRODUCT) {
     json_out(['success' => false, 'error' => 'Producto no válido.'], 404);
 }
 
+// URL de la página de "gracias" tras el pago (por producto).
+$THANK_YOU_URL = isset($PRODUCT['thank_you_url']) && $PRODUCT['thank_you_url'] !== ''
+    ? $PRODUCT['thank_you_url']
+    : 'success.php';
+
 $secretKey = recetario_env('STRIPE_SECRET_KEY', '');
 
 /**
@@ -55,11 +60,12 @@ function stripe_request($endpoint, $params, $secretKey) {
 
 /**
  * Interpreta un PaymentIntent y devuelve la respuesta apropiada al frontend.
+ * $redirect: URL a la que enviar al cliente cuando el pago es exitoso.
  */
-function handle_intent($intent) {
+function handle_intent($intent, $redirect = 'success.php') {
     $status = isset($intent['status']) ? $intent['status'] : '';
     if ($status === 'succeeded') {
-        json_out(['success' => true, 'redirect' => 'success.php']);
+        json_out(['success' => true, 'redirect' => $redirect]);
     }
     if ($status === 'requires_action' || $status === 'requires_source_action') {
         json_out([
@@ -91,7 +97,7 @@ if (!empty($input['payment_intent_id'])) {
     if (isset($intent['error'])) {
         json_out(['success' => false, 'error' => $intent['error']['message']]);
     }
-    handle_intent($intent);
+    handle_intent($intent, $THANK_YOU_URL);
 }
 
 // ---- Primer paso: crear customer + PaymentIntent ----
@@ -147,5 +153,5 @@ if (isset($intent['error'])) {
     json_out(['success' => false, 'error' => $intent['error']['message']]);
 }
 
-handle_intent($intent);
+handle_intent($intent, $THANK_YOU_URL);
 ?>
