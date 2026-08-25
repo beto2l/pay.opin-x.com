@@ -5,6 +5,52 @@ admin_require_auth();
 // El secreto de despliegue se lee del .env del servidor y solo se expone
 // dentro de esta página, protegida por login. Nunca viaja en una URL pública.
 $deploySecret = recetario_env('DEPLOY_SECRET', '');
+
+// ── Información de la versión instalada y últimos cambios ──────────────
+// El sitio se actualiza con "git reset --hard", así que el commit que está
+// en HEAD es exactamente la versión que está corriendo en el servidor.
+$siteRoot = dirname(__DIR__);
+
+/** Ejecuta un comando git dentro de la raíz del sitio y devuelve la salida. */
+function admin_git($siteRoot, $args) {
+    if (!is_dir($siteRoot . '/.git') || !function_exists('shell_exec')) {
+        return null;
+    }
+    $cmd = 'cd ' . escapeshellarg($siteRoot) . ' && git ' . $args . ' 2>/dev/null';
+    $out = @shell_exec($cmd);
+    return ($out === null) ? null : trim($out);
+}
+
+// Datos de la última versión instalada (commit actual en HEAD).
+$currentVersion = null;
+$rawCurrent = admin_git($siteRoot, "log -1 --date=format:'%Y-%m-%d %H:%M' --format='%h|%cd|%an|%s'");
+if ($rawCurrent) {
+    $parts = explode('|', $rawCurrent, 4);
+    if (count($parts) === 4) {
+        $currentVersion = [
+            'hash'    => $parts[0],
+            'date'    => $parts[1],
+            'author'  => $parts[2],
+            'subject' => $parts[3],
+        ];
+    }
+}
+$currentBranch = admin_git($siteRoot, 'rev-parse --abbrev-ref HEAD');
+
+// Log de los últimos cambios (últimos 12 commits).
+$changeLog = admin_git($siteRoot, "log -n 12 --date=format:'%Y-%m-%d %H:%M' --format='• %ad  [%h]  %s'");
+
+// Si no hay git disponible (deploy por ZIP), mostramos el final de deploy.log.
+$deployLogTail = '';
+if ($changeLog === null || $changeLog === '') {
+    $logPath = $siteRoot . '/deploy.log';
+    if (is_file($logPath)) {
+        $lines = @file($logPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        if ($lines) {
+            $deployLogTail = implode("\n", array_slice($lines, -25));
+        }
+    }
+}
 ?><!DOCTYPE html>
 <html lang="es">
 <head>
@@ -45,6 +91,21 @@ $deploySecret = recetario_env('DEPLOY_SECRET', '');
             border: 1px solid rgba(255,255,255,.14); border-radius: 12px; padding: 16px;
             max-height: 340px; overflow: auto; color: #e8e8f2; font-size: 13px;
         }
+        .panel + .panel { margin-top: 20px; }
+        .version-grid { display: grid; grid-template-columns: 130px 1fr; gap: 10px 14px; font-size: 14px; }
+        .version-grid dt { color: #9a9ab0; }
+        .version-grid dd { color: #e8e8f2; word-break: break-word; }
+        .version-grid dd code {
+            background: #0b0b14; border: 1px solid rgba(255,255,255,.14);
+            border-radius: 6px; padding: 2px 8px; font-size: 13px; color: #65ff9a;
+        }
+        .muted { color: #9a9ab0; font-size: 13px; line-height: 1.5; }
+        textarea.changelog {
+            width: 100%; margin-top: 4px; background: #0b0b14; color: #cfe8d8;
+            border: 1px solid rgba(255,255,255,.14); border-radius: 12px;
+            padding: 16px; font-size: 13px; line-height: 1.6; resize: vertical;
+            min-height: 200px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        }
     </style>
 </head>
 <body>
@@ -63,6 +124,35 @@ $deploySecret = recetario_env('DEPLOY_SECRET', '');
                 <span>🔄 Actualizar sitio ahora</span>
             </button>
             <pre id="deployResult"></pre>
+        </div>
+
+        <div class="panel">
+            <h2>Última versión instalada</h2>
+            <?php if ($currentVersion): ?>
+                <dl class="version-grid">
+                    <dt>Versión</dt><dd><code><?= htmlspecialchars($currentVersion['hash']) ?></code></dd>
+                    <dt>Fecha</dt><dd><?= htmlspecialchars($currentVersion['date']) ?></dd>
+                    <dt>Autor</dt><dd><?= htmlspecialchars($currentVersion['author']) ?></dd>
+                    <dt>Cambio</dt><dd><?= htmlspecialchars($currentVersion['subject']) ?></dd>
+                    <?php if ($currentBranch): ?>
+                    <dt>Rama</dt><dd><?= htmlspecialchars($currentBranch) ?></dd>
+                    <?php endif; ?>
+                </dl>
+            <?php else: ?>
+                <p class="muted">No se pudo determinar la versión instalada. Esto ocurre cuando el sitio no se actualiza por Git (por ejemplo, si se subió por ZIP). El log de más abajo mostrará el historial de despliegue disponible.</p>
+            <?php endif; ?>
+        </div>
+
+        <div class="panel">
+            <h2>Últimos cambios</h2>
+            <p class="desc">Historial de las últimas actualizaciones del sitio.</p>
+            <?php if ($changeLog): ?>
+                <textarea class="changelog" readonly><?= htmlspecialchars($changeLog) ?></textarea>
+            <?php elseif ($deployLogTail): ?>
+                <textarea class="changelog" readonly><?= htmlspecialchars($deployLogTail) ?></textarea>
+            <?php else: ?>
+                <textarea class="changelog" readonly>Aún no hay historial de cambios disponible.</textarea>
+            <?php endif; ?>
         </div>
     </div>
 
