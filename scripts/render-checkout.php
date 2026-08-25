@@ -324,11 +324,11 @@ $k2 = isset($_GET['k2']) ? preg_replace('/[^a-zA-Z0-9_\-]/', '', $_GET['k2']) : 
                         </div>
                     </div>
 
-                    <p class="privacy-note">Your personal data will be used to process your order, support your experience throughout this website, and for other purposes described in our <a href="#">privacy policy</a>.</p>
+                    <p class="privacy-note">Your personal data will be used to process your order, support your experience throughout this website, and for other purposes described in our <a href="https://recetarioketo.com/terminos-y-condiciones/" target="_blank">privacy policy</a>.</p>
 
                     <div class="terms-row">
                         <input type="checkbox" id="terms" name="terms" required>
-                        <label for="terms">I have read and agree to the website <a href="#">terms and conditions</a> <span class="req">*</span></label>
+                        <label for="terms">I have read and agree to the website <a href="https://recetarioketo.com/terminos-y-condiciones/" target="_blank">terms and conditions</a> <span class="req">*</span></label>
                     </div>
 
                     <button type="submit" class="btn-order" id="place-order">
@@ -425,7 +425,7 @@ $k2 = isset($_GET['k2']) ? preg_replace('/[^a-zA-Z0-9_\-]/', '', $_GET['k2']) : 
         </div>
         <div class="footer-contact-label">Correo de contacto</div>
         <div class="footer-email">ventas@recetarioketo.com</div>
-        <a class="footer-terms" href="#">Términos de Uso &amp; Política de Privacidad</a>
+        <a class="footer-terms" href="https://recetarioketo.com/terminos-y-condiciones/" target="_blank">Términos de Uso &amp; Política de Privacidad</a>
         <div class="footer-copy">&copy; 2026 <?= htmlspecialchars($PRODUCT['brand']) ?> &ndash; Todos los derechos reservados.</div>
     </footer>
 
