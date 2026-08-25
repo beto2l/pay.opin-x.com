@@ -1,3 +1,3 @@
 <?php
-$PRODUCT_SLUG = 'recetario-keto';
+$PRODUCT_SLUG = 'postres-y-snacks-keto';
 require dirname(__DIR__, 2) . '/scripts/process-payment.php';

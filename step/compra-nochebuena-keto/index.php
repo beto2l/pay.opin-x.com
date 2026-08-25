@@ -1,3 +1,3 @@
 <?php
-$PRODUCT_SLUG = 'recetario-keto';
+$PRODUCT_SLUG = 'compra-nochebuena-keto';
 require dirname(__DIR__, 2) . '/scripts/render-checkout.php';

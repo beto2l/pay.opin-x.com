@@ -3,15 +3,24 @@
   Repositorio: github.com/beto2l/pay.opin-x.com  (privado)
 ================================================================
 
+PÁGINAS PÚBLICAS (las únicas visibles):
+  https://tu-dominio.com/step/recetario-keto/          ($25 USD)
+  https://tu-dominio.com/step/compra-nochebuena-keto/  ($19 USD)
+  https://tu-dominio.com/step/postres-y-snacks-keto/   ($19 USD)
+
+Cualquier otra URL (incluida la raíz "/") devuelve un 404 neutro y NO
+muestra ningún listado de archivos.
+
 TABLA DE CONTENIDO:
 1. Requisitos del Servidor
-2. Configurar el archivo .env (credenciales de Stripe)
+2. Configurar el archivo .env (credenciales de Stripe + admin)
 3. Configurar Llave SSH en el Servidor
 4. Clonar el Repositorio en el Servidor
 5. Configurar Auto-Deploy
-6. Cómo Actualizar el Sitio
-7. Workflow de Trabajo Recomendado
-8. Solución de Problemas
+6. Cómo Actualizar el Sitio (panel oculto o URL)
+7. Panel de Administración Oculto (/admin/)
+8. Workflow de Trabajo Recomendado
+9. Solución de Problemas
 
 ================================================================
 1. REQUISITOS DEL SERVIDOR
@@ -49,6 +58,19 @@ PASO 2 - Editar .env con tus valores reales:
     GITHUB_ZIP_URL=https://github.com/beto2l/pay.opin-x.com/archive/refs/heads/main.zip
     SITE_URL=https://tu-dominio.com
     SUCCESS_EMAIL=ventas@recetarioketo.com
+    ADMIN_USER=admin                     (usuario del panel oculto)
+    ADMIN_PASSWORD_HASH=$2y$...          (ver PASO 2B)
+
+PASO 2B - Generar el hash de la contraseña del panel (/admin/):
+  Nunca guardes la contraseña en texto plano. Genera un hash así
+  (en el servidor o en cualquier PHP):
+
+    php -r 'echo password_hash("TuContraseñaSegura", PASSWORD_DEFAULT);'
+
+  Copia el resultado (empieza con $2y$...) y pégalo en:
+    ADMIN_PASSWORD_HASH=$2y$...
+
+  Para cambiar la contraseña luego, genera un hash nuevo y reemplázalo.
 
 PASO 3 - Proteger el archivo:
   chmod 600 .env
@@ -110,12 +132,16 @@ PASO 4 - Crear y configurar el .env (ver sección 2).
   ¡Recuerda que .env NO viene en el repo, lo creas manualmente!
 
 PASO 5 - Configurar permisos:
-  chmod -R 755 assets scripts step
+  chmod -R 755 assets scripts step admin
   chmod 600 .env
 
 PASO 6 - Verificar que funciona:
-  Abrir en el navegador:
+  Abrir en el navegador las 3 páginas:
   https://tu-dominio.com/step/recetario-keto/
+  https://tu-dominio.com/step/compra-nochebuena-keto/
+  https://tu-dominio.com/step/postres-y-snacks-keto/
+  Y comprobar que la raíz NO lista archivos:
+  https://tu-dominio.com/          (debe mostrar la página 404 neutra)
 
 ================================================================
 5. CONFIGURAR AUTO-DEPLOY
@@ -140,30 +166,57 @@ IMPORTANTE: deploy.php NUNCA sobrescribe ni borra:
 6. CÓMO ACTUALIZAR EL SITIO
 ================================================================
 
-MÉTODO 1 - Desde GitHub (Recomendado)
---------------------------------------
+MÉTODO 1 - Panel oculto con botón (RECOMENDADO)
+------------------------------------------------
 1. Hacer cambios en GitHub (editar online o push local)
+2. Entrar a: https://tu-dominio.com/admin/
+3. Iniciar sesión con ADMIN_USER / tu contraseña
+4. Pulsar el botón "Actualizar sitio ahora"
+   -> El botón llama a deploy.php por AJAX enviando el secreto que se
+      lee del .env en el servidor. NO necesitas escribir el secreto ni
+      usar una URL pública con términos secretos.
+5. Verás el resultado en pantalla (verde = éxito).
+
+MÉTODO 2 - URL directa (respaldo)
+----------------------------------
+1. Hacer cambios en GitHub
 2. Visitar la URL de deploy:
    https://tu-dominio.com/deploy.php?secret=TU_DEPLOY_SECRET
 3. ¡Listo! El sitio se actualiza (sin tocar tu .env)
 
-MÉTODO 2 - Manual por SSH
+MÉTODO 3 - Manual por SSH
 --------------------------
 1. Conectar al servidor: ssh tu-usuario@tu-servidor
 2. Ir al sitio: cd ~/public_html
 3. Descargar cambios: git pull origin main
 
-MÉTODO 3 - Webhook Automático (Avanzado)
------------------------------------------
-1. Ir a: https://github.com/beto2l/pay.opin-x.com/settings/hooks
-2. Click "Add webhook"
-3. Payload URL: https://tu-dominio.com/deploy.php?secret=TU_DEPLOY_SECRET
-4. Content type: application/json
-5. Events: "Just the push event"
-6. Click "Add webhook"
+================================================================
+7. PANEL DE ADMINISTRACIÓN OCULTO (/admin/)
+================================================================
+
+El panel tiene un único propósito: exponer el botón de
+"Actualizar sitio" de forma segura, sin usar URLs públicas con el
+secreto de deploy.
+
+ACCESO:
+  https://tu-dominio.com/admin/
+
+CREDENCIALES (en el .env del servidor):
+  ADMIN_USER            -> usuario (por defecto: admin)
+  ADMIN_PASSWORD_HASH   -> hash de la contraseña (ver sección 2, PASO 2B)
+
+CARACTERÍSTICAS:
+  - Login con sesión PHP; el dashboard exige estar autenticado.
+  - El secreto DEPLOY_SECRET se lee en el servidor y se inyecta en el
+    botón; nunca viaja en la barra de direcciones.
+  - Las páginas del panel llevan <meta name="robots" content="noindex,nofollow">.
+  - "Cerrar sesión" destruye la sesión.
+
+RECOMENDACIÓN: usa una contraseña larga y única. Para cambiarla,
+genera un hash nuevo (sección 2, PASO 2B) y actualiza el .env.
 
 ================================================================
-7. WORKFLOW DE TRABAJO RECOMENDADO
+8. WORKFLOW DE TRABAJO RECOMENDADO
 ================================================================
 
 DESDE GITHUB (más fácil):
@@ -179,7 +232,7 @@ DESDE TU COMPUTADORA (cambios grandes):
 4. Visitar la URL de deploy
 
 ================================================================
-8. SOLUCIÓN DE PROBLEMAS
+9. SOLUCIÓN DE PROBLEMAS
 ================================================================
 
 PROBLEMA: El checkout dice "El servidor de pagos no está configurado"
@@ -200,6 +253,16 @@ SOLUCIÓN: El repo es privado. Usa el método Git con llave SSH
 PROBLEMA: El pago falla con tarjeta de prueba
 SOLUCIÓN: Con claves live debes usar una tarjeta real. Para pruebas
   usa claves de test (pk_test_/sk_test_) y la tarjeta 4242 4242 4242 4242.
+
+PROBLEMA: No puedo entrar al panel /admin/
+SOLUCIÓN: Revisa ADMIN_USER y ADMIN_PASSWORD_HASH en el .env. El hash
+  debe generarse con password_hash() (sección 2, PASO 2B). Si el botón
+  "Actualizar sitio" aparece deshabilitado, falta DEPLOY_SECRET en el .env.
+
+PROBLEMA: La raíz "/" o una URL cualquiera muestra archivos / listado
+SOLUCIÓN: Verifica que el .htaccess se subió (tiene "Options -Indexes")
+  y que Apache permite AllowOverride para leer .htaccess. La raíz debe
+  devolver la página 404 neutra.
 
 ================================================================
   CONTACTO Y SOPORTE

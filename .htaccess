@@ -1,8 +1,15 @@
-# Recetario Keto - Configuración Apache
-# ======================================
+# Recetario Keto / OPIN X - Configuración Apache
+# ==============================================
 
 # Archivo de índice por defecto (PHP primero para inyectar la clave de Stripe)
 DirectoryIndex index.php index.html
+
+# Desactivar listado de directorios (no mostrar "Index of /...")
+Options -Indexes
+
+# Páginas de error personalizadas (neutras, no revelan estructura)
+ErrorDocument 403 /404.php
+ErrorDocument 404 /404.php
 
 # Activar rewrite engine
 RewriteEngine On
@@ -11,22 +18,24 @@ RewriteEngine On
 RewriteCond %{HTTPS} off
 RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
-# Si el usuario entra a /step/recetario-keto/ servir index.php
+# Si el usuario entra a /step/<slug>/ servir su index.php
 RewriteCond %{REQUEST_FILENAME} -d
-RewriteRule ^step/recetario-keto/?$ step/recetario-keto/index.php [L]
+RewriteRule ^step/[^/]+/?$ %{REQUEST_URI}index.php [L]
 
-# Proteger archivos sensibles
-<FilesMatch "^(\.env|\.env\..*|deploy\.log|\.gitignore|\.git|README\.md)$">
-    Require all denied
-    Deny from all
-</FilesMatch>
-
-# Proteger directorio .git y archivos ocultos sensibles
+# ----- Ocultar todo lo que no sea una página pública -----
+# Bloquear acceso directo a la carpeta de scripts compartidos
+RedirectMatch 404 ^/scripts(/|$)
+# Bloquear acceso directo a la carpeta data
+RedirectMatch 404 ^/data(/|$)
+# Bloquear la carpeta .git
 RedirectMatch 404 /\.git
-RedirectMatch 404 /\.env
+# Bloquear archivos de texto/documentación y ejemplos de configuración
+RedirectMatch 404 (?i)\.(env|md|txt|log|sample|example|bak|dist|json|lock)$
 
-# Proteger data directory de acceso directo
-RedirectMatch 404 ^/data/
+# Proteger archivos sensibles por nombre
+<FilesMatch "^(\.env|\.env\..*|deploy\.log|\.gitignore|\.gitkeep|README\.md|INSTRUCCIONES-DEPLOY\.txt|\.htaccess)$">
+    Require all denied
+</FilesMatch>
 
 # Caché de archivos estáticos
 <IfModule mod_expires.c>
