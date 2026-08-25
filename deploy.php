@@ -133,6 +133,34 @@ if (is_dir($sitePath . '/.git')) {
 @chmod($sitePath . '/scripts', 0755);
 @chmod($sitePath . '/data', 0775);
 
+// ── Guardar información de la versión instalada ──────────────────────────
+// Esto permite que el dashboard muestre la versión actual incluso cuando
+// el servidor no tiene Git disponible (deploy por ZIP).
+if ($result['success']) {
+    $versionInfo = [
+        'deployed_at' => date('Y-m-d H:i:s'),
+        'method' => $result['method'] ?? 'unknown',
+        'branch' => $branch,
+    ];
+    
+    // Si hay git disponible, extraer datos del commit actual.
+    if (is_dir($sitePath . '/.git') && function_exists('shell_exec')) {
+        $gitLog = @shell_exec('cd ' . escapeshellarg($sitePath) . ' && git log -1 --date=format:\'%Y-%m-%d %H:%M\' --format=\'%h|%cd|%an|%s\' 2>/dev/null');
+        if ($gitLog) {
+            $parts = explode('|', trim($gitLog), 4);
+            if (count($parts) === 4) {
+                $versionInfo['commit_hash'] = $parts[0];
+                $versionInfo['commit_date'] = $parts[1];
+                $versionInfo['author'] = $parts[2];
+                $versionInfo['subject'] = $parts[3];
+            }
+        }
+    }
+    
+    @file_put_contents($sitePath . '/data/version.json', json_encode($versionInfo, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+    @chmod($sitePath . '/data/version.json', 0644);
+}
+
 deploy_log('RESULT: ' . json_encode($result));
 deploy_log('===== FIN DE ACTUALIZACIÓN =====');
 

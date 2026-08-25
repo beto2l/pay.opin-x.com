@@ -7,8 +7,9 @@
 deploy.log
 *.log
 
-# Datos en tiempo de ejecución (intentos de login, etc.)
+# Datos en tiempo de ejecución (intentos de login, versión instalada, etc.)
 data/login-attempts.json
+data/version.json
 
 # OS files
 .DS_Store

@@ -7,8 +7,8 @@ admin_require_auth();
 $deploySecret = recetario_env('DEPLOY_SECRET', '');
 
 // ── Información de la versión instalada y últimos cambios ──────────────
-// El sitio se actualiza con "git reset --hard", así que el commit que está
-// en HEAD es exactamente la versión que está corriendo en el servidor.
+// Prioridad: leer data/version.json (escrito por deploy.php) > git directo.
+// Esto funciona tanto en servidores con git como en hosting compartido sin git.
 $siteRoot = dirname(__DIR__);
 
 /** Ejecuta un comando git dentro de la raíz del sitio y devuelve la salida. */
@@ -21,21 +21,45 @@ function admin_git($siteRoot, $args) {
     return ($out === null) ? null : trim($out);
 }
 
-// Datos de la última versión instalada (commit actual en HEAD).
+// Datos de la última versión instalada.
 $currentVersion = null;
-$rawCurrent = admin_git($siteRoot, "log -1 --date=format:'%Y-%m-%d %H:%M' --format='%h|%cd|%an|%s'");
-if ($rawCurrent) {
-    $parts = explode('|', $rawCurrent, 4);
-    if (count($parts) === 4) {
+$currentBranch = null;
+$versionFile = $siteRoot . '/data/version.json';
+
+// 1️⃣ Intentar leer data/version.json (escrito por deploy.php en cada actualización).
+if (is_file($versionFile)) {
+    $versionData = @json_decode(file_get_contents($versionFile), true);
+    if ($versionData && is_array($versionData)) {
         $currentVersion = [
-            'hash'    => $parts[0],
-            'date'    => $parts[1],
-            'author'  => $parts[2],
-            'subject' => $parts[3],
+            'hash'    => $versionData['commit_hash'] ?? null,
+            'date'    => $versionData['commit_date'] ?? $versionData['deployed_at'] ?? null,
+            'author'  => $versionData['author'] ?? null,
+            'subject' => $versionData['subject'] ?? null,
+            'method'  => $versionData['method'] ?? null,
         ];
+        $currentBranch = $versionData['branch'] ?? null;
     }
 }
-$currentBranch = admin_git($siteRoot, 'rev-parse --abbrev-ref HEAD');
+
+// 2️⃣ Si no hay version.json, caer a git directo (servidores con git disponible).
+if (!$currentVersion) {
+    $rawCurrent = admin_git($siteRoot, "log -1 --date=format:'%Y-%m-%d %H:%M' --format='%h|%cd|%an|%s'");
+    if ($rawCurrent) {
+        $parts = explode('|', $rawCurrent, 4);
+        if (count($parts) === 4) {
+            $currentVersion = [
+                'hash'    => $parts[0],
+                'date'    => $parts[1],
+                'author'  => $parts[2],
+                'subject' => $parts[3],
+                'method'  => 'git',
+            ];
+        }
+    }
+    if (!$currentBranch) {
+        $currentBranch = admin_git($siteRoot, 'rev-parse --abbrev-ref HEAD');
+    }
+}
 
 // Log de los últimos cambios (últimos 12 commits).
 $changeLog = admin_git($siteRoot, "log -n 12 --date=format:'%Y-%m-%d %H:%M' --format='• %ad  [%h]  %s'");
@@ -130,16 +154,25 @@ if ($changeLog === null || $changeLog === '') {
             <h2>Última versión instalada</h2>
             <?php if ($currentVersion): ?>
                 <dl class="version-grid">
+                    <?php if (!empty($currentVersion['hash'])): ?>
                     <dt>Versión</dt><dd><code><?= htmlspecialchars($currentVersion['hash']) ?></code></dd>
+                    <?php endif; ?>
                     <dt>Fecha</dt><dd><?= htmlspecialchars($currentVersion['date']) ?></dd>
+                    <?php if (!empty($currentVersion['author'])): ?>
                     <dt>Autor</dt><dd><?= htmlspecialchars($currentVersion['author']) ?></dd>
+                    <?php endif; ?>
+                    <?php if (!empty($currentVersion['subject'])): ?>
                     <dt>Cambio</dt><dd><?= htmlspecialchars($currentVersion['subject']) ?></dd>
+                    <?php endif; ?>
                     <?php if ($currentBranch): ?>
                     <dt>Rama</dt><dd><?= htmlspecialchars($currentBranch) ?></dd>
                     <?php endif; ?>
+                    <?php if (!empty($currentVersion['method'])): ?>
+                    <dt>Método</dt><dd><?= htmlspecialchars($currentVersion['method']) ?></dd>
+                    <?php endif; ?>
                 </dl>
             <?php else: ?>
-                <p class="muted">No se pudo determinar la versión instalada. Esto ocurre cuando el sitio no se actualiza por Git (por ejemplo, si se subió por ZIP). El log de más abajo mostrará el historial de despliegue disponible.</p>
+                <p class="muted">No se pudo determinar la versión instalada. Actualiza el sitio con el botón de arriba para generar la información de versión.</p>
             <?php endif; ?>
         </div>
 
