@@ -64,15 +64,15 @@ PASO 2 - Editar .env con tus valores reales:
 PASO 2B - Generar el hash de la contraseña del panel (/admin/):
   Nunca guardes la contraseña en texto plano.
 
-  FORMA FÁCIL (recomendada) - página web:
+  FORMA FÁCIL (recomendada) - generador web de terceros:
     Abre en el navegador:
-      https://tu-dominio.com/admin/hash.php
-    Escribe la contraseña que quieras, pulsa "Generar hash" y usa el
-    botón "Copiar hash". Pega el resultado en el .env:
+      https://bcrypt-generator.com/
+    Escribe la contraseña que quieras usar, deja "Rounds: 10", pulsa
+    "Generate Hash" y copia el resultado completo. Pégalo en el .env:
       ADMIN_PASSWORD_HASH=$2y$...
     (Sin comillas ni espacios extra.)
 
-  ALTERNATIVA por consola (si prefieres):
+  ALTERNATIVA por consola (si tienes acceso SSH):
     php -r 'echo password_hash("TuContraseñaSegura", PASSWORD_DEFAULT);'
     Copia el resultado (empieza con $2y$...) y pégalo en:
       ADMIN_PASSWORD_HASH=$2y$...
@@ -272,7 +272,7 @@ SOLUCIÓN: Con claves live debes usar una tarjeta real. Para pruebas
   usa claves de test (pk_test_/sk_test_) y la tarjeta 4242 4242 4242 4242.
 
 PROBLEMA: No puedo entrar al panel /admin/ / "la contraseña no funciona"
-SOLUCIÓN: Genera el hash otra vez en https://tu-dominio.com/admin/hash.php
+SOLUCIÓN: Genera el hash otra vez en https://bcrypt-generator.com/ (Rounds: 10)
   y pégalo TAL CUAL en ADMIN_PASSWORD_HASH del .env (sin comillas ni
   espacios). El hash empieza con "$2y$"; ese "$" es normal y debe quedar
   igual. Revisa también ADMIN_USER. Si el botón "Actualizar sitio" aparece
