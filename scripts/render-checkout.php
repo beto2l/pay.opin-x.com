@@ -524,7 +524,7 @@ $k2 = isset($_GET['k2']) ? preg_replace('/[^a-zA-Z0-9_\-]/', '', $_GET['k2']) : 
             });
 
             function sendToServer(paymentMethodId, email, firstName, lastName, phone) {
-                fetch('checkout.php', {
+                fetch('checkout/', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -574,7 +574,7 @@ $k2 = isset($_GET['k2']) ? preg_replace('/[^a-zA-Z0-9_\-]/', '', $_GET['k2']) : 
             }
 
             function confirmOnServer(paymentIntentId) {
-                fetch('checkout.php', {
+                fetch('checkout/', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({

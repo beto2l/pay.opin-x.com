@@ -2,7 +2,7 @@
     "contract_version": 2,
     "runtime": "php",
     "site": "pay-opin-x",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "languages": [
         "es"
     ],
@@ -11,14 +11,14 @@
     },
     "routes": {
         "step/recetario-keto/": "step/recetario-keto/index.php",
-        "step/recetario-keto/checkout.php": "step/recetario-keto/checkout.php",
-        "step/recetario-keto/success.php": "step/recetario-keto/success.php",
+        "step/recetario-keto/checkout/": "step/recetario-keto/checkout.php",
+        "step/recetario-keto/success/": "step/recetario-keto/success.php",
         "step/compra-nochebuena-keto/": "step/compra-nochebuena-keto/index.php",
-        "step/compra-nochebuena-keto/checkout.php": "step/compra-nochebuena-keto/checkout.php",
-        "step/compra-nochebuena-keto/success.php": "step/compra-nochebuena-keto/success.php",
+        "step/compra-nochebuena-keto/checkout/": "step/compra-nochebuena-keto/checkout.php",
+        "step/compra-nochebuena-keto/success/": "step/compra-nochebuena-keto/success.php",
         "step/postres-y-snacks-keto/": "step/postres-y-snacks-keto/index.php",
-        "step/postres-y-snacks-keto/checkout.php": "step/postres-y-snacks-keto/checkout.php",
-        "step/postres-y-snacks-keto/success.php": "step/postres-y-snacks-keto/success.php",
+        "step/postres-y-snacks-keto/checkout/": "step/postres-y-snacks-keto/checkout.php",
+        "step/postres-y-snacks-keto/success/": "step/postres-y-snacks-keto/success.php",
         "step/recetario-keto-thank-you/": "step/recetario-keto-thank-you/index.php",
         "step/gracias-por-tu-compra-postres/": "step/gracias-por-tu-compra-postres/index.php"
     },
@@ -56,7 +56,7 @@
         "scripts/env-loader.php": "068ebcff2362cbae3acd6f6ede9673dc958e02ad8cd3c06c04f71a702d81d863",
         "scripts/process-payment.php": "357b6a07188ad43049c5b619876d83c5c133a75efc60a76487a63c66257c8667",
         "scripts/products.php": "f726d33b81dee750b01084752e9b0958bc3a91c66b531213209f8fced9c48b89",
-        "scripts/render-checkout.php": "4933cea93ac8c6dd218824df2e2011e56df1e839c10d743ba2ac1bed067e2bbc",
+        "scripts/render-checkout.php": "0b37c76ef70841b999a71b1f655d219e969e4d1950501d1300fd12dbf910ea87",
         "scripts/render-success.php": "dec4057767df289144618a5ff4b2cf56673992dd0e2b949f9de0b2d891274054",
         "scripts/render-thankyou.php": "fa7b8cdd672fd757aeeb6a865afb786b97f883aa3b0804e6cbf99ed1207db81b",
         "step/compra-nochebuena-keto/checkout.php": "6b2af9036a2d56ae887db097b5026f3cafa733248bb327cc07fcc67007e537b2",
