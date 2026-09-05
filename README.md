@@ -1,8 +1,9 @@
 # 🥑 OPIN X — Checkouts (Recetarios Keto)
 
 Páginas de checkout (réplicas estáticas) para vender productos digitales con
-procesamiento de pagos vía **Stripe**, sistema de **auto-deploy** desde GitHub y
-un **panel de administración oculto** con botón de actualización por AJAX.
+procesamiento de pagos vía **Stripe**. La publicación principal se administra
+desde **LuxWrap Studio en WordPress** mediante una versión comprobada archivo por
+archivo antes de activarse.
 
 ## 🧾 Páginas / productos
 
@@ -64,15 +65,19 @@ Todas las claves sensibles (Stripe, secreto de deploy, contraseña del admin) vi
 4. Si requiere autenticación 3D Secure, el frontend ejecuta `handleNextAction`.
 5. Al aprobarse, se redirige a `success.php`.
 
-## 🚀 Actualizar el sitio (2 formas)
+## 🚀 Actualizar el sitio
 
-- **Panel oculto (recomendado):** entrar a `/admin/`, iniciar sesión y pulsar
-  **“Actualizar sitio ahora”**. El botón llama a `deploy.php` por AJAX enviando el
-  secreto que se lee del `.env` en el servidor (nunca aparece en una URL pública).
-- **URL directa (respaldo):** `https://tu-dominio.com/deploy.php?secret=TU_DEPLOY_SECRET`
+- Entra a `https://pay.opin-x.com/wp-admin/` y abre **OPIN X → LuxWrap Studio**.
+- Pulsa **Buscar e instalar actualización**. WordPress descarga
+  `lw-release.json`, valida sus SHA-256 y activa la versión de forma atómica.
+- `admin/` y `deploy.php` se conservan solo para rollback del hosting anterior;
+  no forman parte de la publicación accesible bajo WordPress.
 
-Ver `INSTRUCCIONES-DEPLOY.txt` para la configuración completa (incluye cómo crear
-el usuario/contraseña del panel).
+Para generar el manifiesto después de cambiar el website ejecuta
+`php scripts/build-lw-release.php` antes del commit.
+
+Las credenciales Stripe permanecen fuera del repositorio y fuera del directorio
+público. LuxWrap Studio las lee desde su archivo privado persistente.
 
 ## 📞 Contacto
 

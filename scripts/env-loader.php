@@ -47,5 +47,6 @@ if (!function_exists('recetario_env')) {
     }
 }
 
-recetario_load_env();
+$recetario_env_path = defined('LW_SITE_ENV_FILE') ? LW_SITE_ENV_FILE : null;
+recetario_load_env($recetario_env_path);
 ?>

@@ -19,6 +19,7 @@ if (!$PRODUCT) {
 }
 
 $stripe_pk = recetario_env('STRIPE_PUBLISHABLE_KEY', '');
+$checkout_token = function_exists('wp_create_nonce') ? wp_create_nonce('recetario_checkout_' . $PRODUCT_SLUG) : '';
 // Parámetros de campaña (para métricas / metadata en el pago)
 $k1 = isset($_GET['k1']) ? preg_replace('/[^a-zA-Z0-9_\-]/', '', $_GET['k1']) : '';
 $k2 = isset($_GET['k2']) ? preg_replace('/[^a-zA-Z0-9_\-]/', '', $_GET['k2']) : '';
@@ -439,6 +440,18 @@ $k2 = isset($_GET['k2']) ? preg_replace('/[^a-zA-Z0-9_\-]/', '', $_GET['k2']) : 
             var btnLabel = btn.querySelector('.btn-label');
             var K1 = <?= json_encode($k1) ?>;
             var K2 = <?= json_encode($k2) ?>;
+            var checkoutToken = <?= json_encode($checkout_token) ?>;
+            var requestId = '';
+
+            function getRequestId() {
+                if (requestId) { return requestId; }
+                if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+                    requestId = window.crypto.randomUUID();
+                } else {
+                    requestId = 'pay-' + Date.now() + '-' + Math.random().toString(16).slice(2);
+                }
+                return requestId;
+            }
 
             function showFormError(msg) {
                 formError.textContent = msg;
@@ -521,7 +534,9 @@ $k2 = isset($_GET['k2']) ? preg_replace('/[^a-zA-Z0-9_\-]/', '', $_GET['k2']) : 
                         phone: phone,
                         payment_method_id: paymentMethodId,
                         k1: K1,
-                        k2: K2
+                        k2: K2,
+                        checkout_token: checkoutToken,
+                        idempotency_key: getRequestId()
                     })
                 })
                 .then(function (r) { return r.json(); })
@@ -562,7 +577,11 @@ $k2 = isset($_GET['k2']) ? preg_replace('/[^a-zA-Z0-9_\-]/', '', $_GET['k2']) : 
                 fetch('checkout.php', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ payment_intent_id: paymentIntentId })
+                    body: JSON.stringify({
+                        payment_intent_id: paymentIntentId,
+                        checkout_token: checkoutToken,
+                        idempotency_key: getRequestId()
+                    })
                 })
                 .then(function (r) { return r.json(); })
                 .then(function (data) { handleServerResponse(data); })

@@ -37,14 +37,18 @@ $secretKey = recetario_env('STRIPE_SECRET_KEY', '');
  * Llama a la API de Stripe usando cURL.
  * @return array [status_code, decoded_body]
  */
-function stripe_request($endpoint, $params, $secretKey) {
+function stripe_request($endpoint, $params, $secretKey, $idempotencyKey = '') {
     $ch = curl_init('https://api.stripe.com/v1/' . $endpoint);
+    $headers = ['Content-Type: application/x-www-form-urlencoded'];
+    if ($idempotencyKey !== '') {
+        $headers[] = 'Idempotency-Key: ' . $idempotencyKey;
+    }
     curl_setopt_array($ch, [
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_POST           => true,
         CURLOPT_POSTFIELDS     => http_build_query($params),
         CURLOPT_USERPWD        => $secretKey . ':',
-        CURLOPT_HTTPHEADER     => ['Content-Type: application/x-www-form-urlencoded'],
+        CURLOPT_HTTPHEADER     => $headers,
         CURLOPT_TIMEOUT        => 45,
     ]);
     $response = curl_exec($ch);
@@ -77,6 +81,10 @@ function handle_intent($intent, $redirect = 'success.php') {
 }
 
 // ---- Validaciones iniciales ----
+if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
+    json_out(['success' => false, 'error' => 'Método no permitido.'], 405);
+}
+
 if (!$secretKey) {
     json_out(['success' => false, 'error' => 'El servidor de pagos no está configurado (falta STRIPE_SECRET_KEY).'], 500);
 }
@@ -87,12 +95,36 @@ if (!is_array($input)) {
     json_out(['success' => false, 'error' => 'Solicitud inválida.'], 400);
 }
 
+if (function_exists('wp_verify_nonce')) {
+    $checkoutToken = isset($input['checkout_token']) ? (string) $input['checkout_token'] : '';
+    if (!$checkoutToken || !wp_verify_nonce($checkoutToken, 'recetario_checkout_' . $PRODUCT_SLUG)) {
+        json_out(['success' => false, 'error' => 'La sesión de pago expiró. Actualiza la página e inténtalo nuevamente.'], 403);
+    }
+}
+
+$idempotencyKey = isset($input['idempotency_key']) ? trim((string) $input['idempotency_key']) : '';
+if (!preg_match('/^[A-Za-z0-9._:-]{12,120}$/', $idempotencyKey)) {
+    json_out(['success' => false, 'error' => 'No se pudo identificar de forma segura este intento de pago.'], 400);
+}
+
+if (function_exists('get_transient') && function_exists('set_transient')) {
+    $remote = (string) ($_SERVER['REMOTE_ADDR'] ?? 'unknown');
+    $salt = function_exists('wp_salt') ? wp_salt('nonce') : __FILE__;
+    $rateKey = 'lw_pay_rate_' . substr(hash_hmac('sha256', $remote, $salt), 0, 32);
+    $attempts = (int) get_transient($rateKey);
+    if ($attempts >= 12) {
+        json_out(['success' => false, 'error' => 'Demasiados intentos. Espera unos minutos e inténtalo nuevamente.'], 429);
+    }
+    set_transient($rateKey, $attempts + 1, 10 * MINUTE_IN_SECONDS);
+}
+
 // ---- Segundo paso: confirmar un PaymentIntent tras autenticación 3DS ----
 if (!empty($input['payment_intent_id'])) {
     list($code, $intent) = stripe_request(
         'payment_intents/' . urlencode($input['payment_intent_id']) . '/confirm',
         [],
-        $secretKey
+        $secretKey,
+        $idempotencyKey . '-confirm'
     );
     if (isset($intent['error'])) {
         json_out(['success' => false, 'error' => $intent['error']['message']]);
@@ -124,7 +156,7 @@ list($custCode, $customer) = stripe_request('customers', [
     'email' => $email,
     'name'  => trim($firstName . ' ' . $lastName),
     'phone' => $phone,
-], $secretKey);
+], $secretKey, $idempotencyKey . '-customer');
 
 if (isset($customer['error'])) {
     json_out(['success' => false, 'error' => $customer['error']['message']]);
@@ -147,7 +179,7 @@ list($piCode, $intent) = stripe_request('payment_intents', [
     'metadata[phone]'       => $phone,
     'metadata[k1]'          => $k1,
     'metadata[k2]'          => $k2,
-], $secretKey);
+], $secretKey, $idempotencyKey . '-payment-intent');
 
 if (isset($intent['error'])) {
     json_out(['success' => false, 'error' => $intent['error']['message']]);
