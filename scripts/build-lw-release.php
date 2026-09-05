@@ -50,7 +50,7 @@ $manifest = [
     'contract_version' => 2,
     'runtime' => 'php',
     'site' => 'pay-opin-x',
-    'version' => '1.0.2',
+    'version' => '1.0.3',
     'languages' => ['es'],
     'entries' => ['es' => 'step/recetario-keto/index.php'],
     'routes' => $routes,
