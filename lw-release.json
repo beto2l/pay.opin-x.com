@@ -2,7 +2,7 @@
     "contract_version": 2,
     "runtime": "php",
     "site": "pay-opin-x",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "languages": [
         "es"
     ],
@@ -55,7 +55,7 @@
         "assets/img/vs.webp": "d056584a1ed6f00662d0b08c56dab11c40cd94263dd1631734c6a369cd816d01",
         "scripts/env-loader.php": "068ebcff2362cbae3acd6f6ede9673dc958e02ad8cd3c06c04f71a702d81d863",
         "scripts/process-payment.php": "357b6a07188ad43049c5b619876d83c5c133a75efc60a76487a63c66257c8667",
-        "scripts/products.php": "571e5e13c1628198f84175b3da43f8f580b415f140454159ef04f2500c48f525",
+        "scripts/products.php": "f726d33b81dee750b01084752e9b0958bc3a91c66b531213209f8fced9c48b89",
         "scripts/render-checkout.php": "4933cea93ac8c6dd218824df2e2011e56df1e839c10d743ba2ac1bed067e2bbc",
         "scripts/render-success.php": "dec4057767df289144618a5ff4b2cf56673992dd0e2b949f9de0b2d891274054",
         "scripts/render-thankyou.php": "fa7b8cdd672fd757aeeb6a865afb786b97f883aa3b0804e6cbf99ed1207db81b",

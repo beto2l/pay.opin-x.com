@@ -58,6 +58,11 @@ $PRODUCTS = [
 
 ];
 
+// LuxWrap ejecuta la aplicación desde el renderer de WordPress. Conservamos
+// el catálogo en $GLOBALS para que las funciones lo encuentren sin depender
+// del ámbito desde el que se incluyó este archivo.
+$GLOBALS['RECETARIO_PRODUCTS'] = $PRODUCTS;
+
 /**
  * Páginas de "gracias / descarga" (thank you) tras el pago.
  * Cada una vive en /step/<slug>/ y replica el diseño de las páginas
@@ -129,19 +134,25 @@ $THANKYOU_PAGES = [
 
 ];
 
+$GLOBALS['RECETARIO_THANKYOU_PAGES'] = $THANKYOU_PAGES;
+
 /**
  * Devuelve la configuración del producto activo o null si no existe.
  */
 function recetario_get_product($slug) {
-    global $PRODUCTS;
-    return isset($PRODUCTS[$slug]) ? $PRODUCTS[$slug] : null;
+    $products = isset($GLOBALS['RECETARIO_PRODUCTS']) && is_array($GLOBALS['RECETARIO_PRODUCTS'])
+        ? $GLOBALS['RECETARIO_PRODUCTS']
+        : [];
+    return isset($products[$slug]) ? $products[$slug] : null;
 }
 
 /**
  * Devuelve la configuración de una página de "gracias" o null si no existe.
  */
 function recetario_get_thankyou($slug) {
-    global $THANKYOU_PAGES;
-    return isset($THANKYOU_PAGES[$slug]) ? $THANKYOU_PAGES[$slug] : null;
+    $pages = isset($GLOBALS['RECETARIO_THANKYOU_PAGES']) && is_array($GLOBALS['RECETARIO_THANKYOU_PAGES'])
+        ? $GLOBALS['RECETARIO_THANKYOU_PAGES']
+        : [];
+    return isset($pages[$slug]) ? $pages[$slug] : null;
 }
 ?>
